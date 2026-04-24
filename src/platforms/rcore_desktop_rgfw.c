@@ -1597,7 +1597,7 @@ void PollInputEvents(void)
     //-----------------------------------------------------------------------------
 
     mg_event gamepad_event;
-    while (mg_gamepads_check_event(&platform.minigamepad, &gamepad_event)) {
+    while (0) { // mg_gamepads_check_event(&platform.minigamepad, &gamepad_event)) {
         int gamepadIndex = gamepad_event.gamepad->index;
         switch (gamepad_event.type) {
             case MG_EVENT_BUTTON_PRESS:
@@ -1921,7 +1921,6 @@ int InitPlatform(void)
     }
 #endif
 
-    mg_gamepads_init(&platform.minigamepad);
 
     return 0;
 }
@@ -1929,7 +1928,6 @@ int InitPlatform(void)
 // Close platform
 void ClosePlatform(void)
 {
-    mg_gamepads_free(&platform.minigamepad);
     RGFW_window_close(platform.window);
 
     #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
