@@ -37,6 +37,7 @@
 // Mandatory modules: rcore, rlgl
 //------------------------------------------------------------------------------------
 #ifndef SUPPORT_MODULE_RSHAPES
+    // NOTE: Needed for raygui.
     #define SUPPORT_MODULE_RSHAPES      1
 #endif
 #ifndef SUPPORT_MODULE_RTEXTURES
@@ -49,7 +50,7 @@
     #define SUPPORT_MODULE_RMODELS      1
 #endif
 #ifndef SUPPORT_MODULE_RAUDIO
-    #define SUPPORT_MODULE_RAUDIO       1
+    #define SUPPORT_MODULE_RAUDIO       0
 #endif
 
 //------------------------------------------------------------------------------------
@@ -66,24 +67,24 @@
 #endif
 #ifndef SUPPORT_GESTURES_SYSTEM
     // Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
-    #define SUPPORT_GESTURES_SYSTEM         1
+    #define SUPPORT_GESTURES_SYSTEM         0
 #endif
 #ifndef SUPPORT_RPRAND_GENERATOR
     // Include pseudo-random numbers generator (rprand.h), based on Xoshiro128** and SplitMix64
-    #define SUPPORT_RPRAND_GENERATOR        1
+    #define SUPPORT_RPRAND_GENERATOR        0
 #endif
 #ifndef SUPPORT_MOUSE_GESTURES
     // Mouse gestures are directly mapped like touches and processed by the gestures system
-    #define SUPPORT_MOUSE_GESTURES          1
+    #define SUPPORT_MOUSE_GESTURES          0
 #endif
 #ifndef SUPPORT_SSH_KEYBOARD_RPI
     // Reconfigure standard input to receive key inputs, works with SSH connection
-    #define SUPPORT_SSH_KEYBOARD_RPI        1
+    #define SUPPORT_SSH_KEYBOARD_RPI        0
 #endif
 #ifndef SUPPORT_WINMM_HIGHRES_TIMER
     // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions
     // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often
-    #define SUPPORT_WINMM_HIGHRES_TIMER     1
+    #define SUPPORT_WINMM_HIGHRES_TIMER     0
 #endif
 #if !SUPPORT_BUSY_WAIT_LOOP && !SUPPORT_PARTIALBUSY_WAIT_LOOP
     // Use busy wait loop for timing sync, if not defined, a high-resolution timer is set up and used
@@ -97,15 +98,15 @@
 #ifndef SUPPORT_SCREEN_CAPTURE
     // Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
     // WARNING: It requires SUPPORT_FILEFORMAT_PNG flag
-    #define SUPPORT_SCREEN_CAPTURE          1
+    #define SUPPORT_SCREEN_CAPTURE          0
 #endif
 #ifndef SUPPORT_COMPRESSION_API
     // Support CompressData() and DecompressData() functions
-    #define SUPPORT_COMPRESSION_API         1
+    #define SUPPORT_COMPRESSION_API         0
 #endif
 #ifndef SUPPORT_AUTOMATION_EVENTS
     // Support automatic generated events, loading and recording of those events when required
-    #define SUPPORT_AUTOMATION_EVENTS       1
+    #define SUPPORT_AUTOMATION_EVENTS       0
 #endif
 #ifndef SUPPORT_CUSTOM_FRAME_CONTROL
     // Support custom frame control, only for advanced users
@@ -121,7 +122,7 @@
     //  - SUPPORT_FILEFORMAT_BMP (Windows clipboard)
     //  - SUPPORT_FILEFORMAT_PNG (Wayland clipboard)
     //  - SUPPORT_FILEFORMAT_JPG
-    #define SUPPORT_CLIPBOARD_IMAGE         1
+    #define SUPPORT_CLIPBOARD_IMAGE         0
 #endif
 
 // rcore: Configuration values
@@ -218,7 +219,7 @@
 #ifndef SUPPORT_QUADS_DRAW_MODE
     // Use QUADS instead of TRIANGLES for drawing when possible
     // Some lines-based shapes could still use lines
-    #define SUPPORT_QUADS_DRAW_MODE         1
+    #define SUPPORT_QUADS_DRAW_MODE         0
 #endif
 
 //------------------------------------------------------------------------------------
@@ -226,11 +227,11 @@
 //------------------------------------------------------------------------------------
 // Selected desired fileformats to be supported for image data loading
 #ifndef SUPPORT_FILEFORMAT_PNG
-    #define SUPPORT_FILEFORMAT_PNG      1
+    #define SUPPORT_FILEFORMAT_PNG      0
 #endif
 #ifndef SUPPORT_FILEFORMAT_BMP
     // NOTE: BMP support required for clipboard images on Windows
-    #define SUPPORT_FILEFORMAT_BMP      1
+    #define SUPPORT_FILEFORMAT_BMP      0
 #endif
 #ifndef SUPPORT_FILEFORMAT_TGA
     #define SUPPORT_FILEFORMAT_TGA      0       // Disabled by default
@@ -239,10 +240,10 @@
     #define SUPPORT_FILEFORMAT_JPG      0       // Disabled by default
 #endif
 #ifndef SUPPORT_FILEFORMAT_GIF
-    #define SUPPORT_FILEFORMAT_GIF      1
+    #define SUPPORT_FILEFORMAT_GIF      0
 #endif
 #ifndef SUPPORT_FILEFORMAT_QOI
-    #define SUPPORT_FILEFORMAT_QOI      1
+    #define SUPPORT_FILEFORMAT_QOI      0
 #endif
 #ifndef SUPPORT_FILEFORMAT_PEP
     #define SUPPORT_FILEFORMAT_PEP      0
@@ -251,7 +252,7 @@
     #define SUPPORT_FILEFORMAT_PSD      0       // Disabled by default
 #endif
 #ifndef SUPPORT_FILEFORMAT_DDS
-    #define SUPPORT_FILEFORMAT_DDS      1
+    #define SUPPORT_FILEFORMAT_DDS      0
 #endif
 #ifndef SUPPORT_FILEFORMAT_HDR
     #define SUPPORT_FILEFORMAT_HDR      0       // Disabled by default
@@ -278,12 +279,12 @@
 #ifndef SUPPORT_IMAGE_EXPORT
     // Support image export functionality (.png, .bmp, .tga, .jpg, .qoi)
     // NOTE: Image export requires stb_image_write.h library
-    #define SUPPORT_IMAGE_EXPORT        1
+    #define SUPPORT_IMAGE_EXPORT        0
 #endif
 #ifndef SUPPORT_IMAGE_GENERATION
     // Support procedural image generation functionality: gradient, spot, perlin-noise, cellular...
     // NOTE: Perlin noise requires stb_perlin.h library
-    #define SUPPORT_IMAGE_GENERATION    1
+    #define SUPPORT_IMAGE_GENERATION    0
 #endif
 
 //------------------------------------------------------------------------------------
@@ -291,10 +292,10 @@
 //------------------------------------------------------------------------------------
 // Selected desired font fileformats to be supported for loading
 #ifndef SUPPORT_FILEFORMAT_TTF
-    #define SUPPORT_FILEFORMAT_TTF      1
+    #define SUPPORT_FILEFORMAT_TTF      0
 #endif
 #ifndef SUPPORT_FILEFORMAT_FNT
-    #define SUPPORT_FILEFORMAT_FNT      1
+    #define SUPPORT_FILEFORMAT_FNT      0
 #endif
 #ifndef SUPPORT_FILEFORMAT_BDF
     #define SUPPORT_FILEFORMAT_BDF      0       // Disabled by default
@@ -305,31 +306,31 @@
 //------------------------------------------------------------------------------------
 // Selected desired model fileformats to be supported for loading
 #ifndef SUPPORT_FILEFORMAT_OBJ
-    #define SUPPORT_FILEFORMAT_OBJ      1
+    #define SUPPORT_FILEFORMAT_OBJ      0
 #endif
 #ifndef SUPPORT_FILEFORMAT_MTL
-    #define SUPPORT_FILEFORMAT_MTL      1
+    #define SUPPORT_FILEFORMAT_MTL      0
 #endif
 #ifndef SUPPORT_FILEFORMAT_IQM
     #define SUPPORT_FILEFORMAT_IQM      1
 #endif
 #ifndef SUPPORT_FILEFORMAT_GLTF
-    #define SUPPORT_FILEFORMAT_GLTF     1
+    #define SUPPORT_FILEFORMAT_GLTF     0
 #endif
 #ifndef SUPPORT_FILEFORMAT_VOX
-    #define SUPPORT_FILEFORMAT_VOX      1
+    #define SUPPORT_FILEFORMAT_VOX      0
 #endif
 #ifndef SUPPORT_FILEFORMAT_M3D
-    #define SUPPORT_FILEFORMAT_M3D      1
+    #define SUPPORT_FILEFORMAT_M3D      0
 #endif
 #ifndef SUPPORT_MESH_GENERATION
     // Support procedural mesh generation functions, uses external par_shapes.h library
     // NOTE: Some generated meshes DO NOT include generated texture coordinates
-    #define SUPPORT_MESH_GENERATION     1
+    #define SUPPORT_MESH_GENERATION     0
 #endif
 #ifndef SUPPORT_GPU_SKINNING
     // GPU skinning disabled by default, some GPUs do not support more than 8 VBOs
-    #define SUPPORT_GPU_SKINNING        0
+    #define SUPPORT_GPU_SKINNING        1
 #endif
 
 //------------------------------------------------------------------------------------
