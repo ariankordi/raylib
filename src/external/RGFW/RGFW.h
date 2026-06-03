@@ -172,6 +172,12 @@ int main() {
 		AC Gaudette (@acgaudette)
 */
 
+#ifdef _WIN32
+
+#include "../../win32_polyfill.h"
+
+#endif // _WIN32
+
 #if _MSC_VER
 	#pragma comment(lib, "gdi32")
 	#pragma comment(lib, "shell32")
@@ -10497,29 +10503,9 @@ void RGFW_win32_makeWindowTransparent(RGFW_window* win) {
 	} else
 	#endif
 	{
-		SetWindowLong(win->src.window, GWL_EXSTYLE, WS_EX_LAYERED);
-		SetLayeredWindowAttributes(win->src.window, 0, 128,  LWA_ALPHA);
+		//SetWindowLong(win->src.window, GWL_EXSTYLE, WS_EX_LAYERED);
+		//SetLayeredWindowAttributes(win->src.window, 0, 128,  LWA_ALPHA);
 	}
-}
-
-RGFWDEF RGFW_bool RGFW_win32_getDarkModeState(void);
-RGFW_bool RGFW_win32_getDarkModeState(void) {
-	u32 lightMode = 1;
-	DWORD len = sizeof(lightMode);
-
-	RegGetValueW(
-		HKEY_CURRENT_USER,
-		L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-		L"AppsUseLightTheme", RRF_RT_REG_DWORD, NULL, &lightMode, &len
-	);
-
-	return (lightMode == 0);
-}
-
-RGFWDEF void RGFW_win32_makeWindowDarkMode(RGFW_window* win, RGFW_bool state);
-void RGFW_win32_makeWindowDarkMode(RGFW_window* win, RGFW_bool state) {
-	BOOL value = (state == RGFW_TRUE) ? TRUE : FALSE;
-	DwmSetWindowAttributeSRC(win->src.window, 20 /* DWMWA_USE_IMMERSIVE_DARK_MODE */, &value, sizeof(value));
 }
 
 LRESULT CALLBACK WndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -10702,14 +10688,14 @@ LRESULT CALLBACK WndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             return 0;
         }
 
-        case WM_UNICHAR: {
+        /*case WM_UNICHAR: {
             if (wParam == UNICODE_NOCHAR) {
                 return TRUE;
             }
 
 			RGFW_keyCharCallback(win, (u32)wParam);
             return 0;
-        }
+        }*/
 		case WM_SYSKEYUP: case WM_KEYUP: {
 			if (!(win->internal.enabledEvents & RGFW_keyReleasedFlag)) return DefWindowProcW(hWnd, message, wParam, lParam);
 			i32 scancode = (HIWORD(lParam) & (KF_EXTENDED | 0xff));
@@ -11245,8 +11231,6 @@ RGFW_window* RGFW_createWindowPlatform(const char* name, RGFW_windowFlags flags,
 	}
 	win->src.hdc = GetDC(win->src.window);
 
-	RGFW_win32_makeWindowDarkMode(win, RGFW_win32_getDarkModeState());
-	RGFW_win32_makeWindowTransparent(win);
 	return win;
 }
 
@@ -11372,8 +11356,8 @@ void RGFW_window_setFloating(RGFW_window* win, RGFW_bool floating) {
 }
 
 void RGFW_window_setOpacity(RGFW_window* win, u8 opacity) {
-	SetWindowLong(win->src.window, GWL_EXSTYLE, WS_EX_LAYERED);
-	SetLayeredWindowAttributes(win->src.window, 0, opacity, LWA_ALPHA);
+	//SetWindowLong(win->src.window, GWL_EXSTYLE, WS_EX_LAYERED);
+	//SetLayeredWindowAttributes(win->src.window, 0, opacity, LWA_ALPHA);
 }
 
 void RGFW_window_restore(RGFW_window* win) { RGFW_window_show(win); }

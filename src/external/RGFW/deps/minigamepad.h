@@ -1572,6 +1572,7 @@ const DIDATAFORMAT mg_dataFormat = {
 };
 
 mg_bool mg_supportsXInput(const GUID* guid) {
+/*
     RAWINPUTDEVICELIST* list;
     unsigned int count = 0;
     mg_size_t i;
@@ -1622,7 +1623,7 @@ mg_bool mg_supportsXInput(const GUID* guid) {
         }
     }
 
-    free(list);
+    free(list);*/
     return MG_FALSE;
 }
 

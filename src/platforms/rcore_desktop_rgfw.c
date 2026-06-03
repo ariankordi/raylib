@@ -628,7 +628,7 @@ void SetWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
     {
-        RGFW_window_setMousePassthrough(platform.window, 1);
+        //RGFW_window_setMousePassthrough(platform.window, 1);
     }
     if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
@@ -704,7 +704,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
     {
-        RGFW_window_setMousePassthrough(platform.window, 0);
+        //RGFW_window_setMousePassthrough(platform.window, 0);
     }
     if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {

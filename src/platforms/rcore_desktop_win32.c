@@ -53,6 +53,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include "../win32_polyfill.h"
 
 #undef CloseWindow      // raylib symbol collision
 #undef Rectangle        // raylib symbol collision
@@ -1469,10 +1470,15 @@ HGLRC InitOpenGL(HWND hwnd, HDC hdc)
         int contextAttribs[] = {
             WGL_CONTEXT_MAJOR_VERSION_ARB, glContextVersionMajor,
             WGL_CONTEXT_MINOR_VERSION_ARB, glContextVersionMinor,
-            WGL_CONTEXT_PROFILE_MASK_ARB, glContextProfile, // WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, WGL_CONTEXT_ES_PROFILE_BIT_EXT (if supported)
+            //WGL_CONTEXT_PROFILE_MASK_ARB, glContextProfile, // WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, WGL_CONTEXT_ES_PROFILE_BIT_EXT (if supported)
             //WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB | WGL_CONTEXT_DEBUG_BIT_ARB [glDebugMessageCallback()]
             0 // Terminator
         };
+        if (rlGetVersion() < RL_OPENGL_21)
+        {
+            contextAttribs[4] = 0; // terminate and do not provide the profile mask
+            // nvidia driver fails to get context if you do that
+        }
 
         // NOTE: Not sharing context resources so, second parameters is NULL
         realContext = wglCreateContextAttribsARB(hdc, NULL, contextAttribs);
@@ -1480,7 +1486,11 @@ HGLRC InitOpenGL(HWND hwnd, HDC hdc)
         // Check for error context creation errors
         // ERROR_INVALID_VERSION_ARB (0x2095)
         // ERROR_INVALID_PROFILE_ARB (0x2096)
-        if (realContext == NULL) TRACELOG(LOG_ERROR, "GL: Error creating requested context: %lu", GetLastError());
+        if (realContext == NULL)
+        {
+            // print win32 GetLastError in hex
+            TRACELOG(LOG_ERROR, "GL: Error creating requested context: 0x%X", GetLastError());
+        }
     }
 
     // Cleanup dummy temp context
@@ -1892,6 +1902,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
             DefWindowProc(hwnd, msg, wparam, lparam);
         } break;
+#if _WIN32_WINNT >= 0x0A00
         case WM_GETDPISCALEDSIZE:
         {
             SIZE *inoutSize = (SIZE *)lparam;
@@ -1936,6 +1947,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             // TODO: Update screen data, render size, screen scaling, viewport...
 
         } break;
+#endif
         case WM_SETCURSOR:
         {
             // Called when mouse moves, enters/leaves window...
@@ -2001,7 +2013,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             }
         } break;
         case WM_MOUSEWHEEL: CORE.Input.Mouse.currentWheelMove.y = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
+#if _WIN32_WINNT >= 0x0600
         case WM_MOUSEHWHEEL: CORE.Input.Mouse.currentWheelMove.x = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
+#endif
 
         default: result = DefWindowProcW(hwnd, msg, wparam, lparam); // Message passed directly for execution (default behaviour)
     }
@@ -2222,6 +2236,7 @@ static void UpdateFlags(HWND hwnd, unsigned desiredFlags, int width, int height)
     // Flags that apply immediately without needing any operations
     CORE.Window.flags |= (desiredFlags & FLAG_MASK_NO_UPDATE);
 
+#if _WIN32_WINNT >= 0x0501
     int vsync = (desiredFlags & FLAG_VSYNC_HINT)? 1 : 0;
     if (wglSwapIntervalEXT)
     {
@@ -2229,6 +2244,7 @@ static void UpdateFlags(HWND hwnd, unsigned desiredFlags, int width, int height)
         if (vsync) CORE.Window.flags |= FLAG_VSYNC_HINT;
         else CORE.Window.flags &= ~FLAG_VSYNC_HINT;
     }
+#endif
 
     // TODO: Review all this code...
     DWORD previousStyle = 0;
