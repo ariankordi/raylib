@@ -870,11 +870,15 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
-    #define GLAD_MALLOC RL_MALLOC
-    #define GLAD_FREE RL_FREE
+    #if defined(__APPLE__)
+        #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
+    #else
+        #define GLAD_MALLOC RL_MALLOC
+        #define GLAD_FREE RL_FREE
 
-    #define GLAD_GL_IMPLEMENTATION
-    #include "external/glad.h"          // GLAD extensions loading library, includes OpenGL headers
+        #define GLAD_GL_IMPLEMENTATION
+        #include "external/glad.h"          // GLAD extensions loading library, includes OpenGL headers
+    #endif
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES3)
@@ -2409,8 +2413,10 @@ void rlLoadExtensions(void *loader)
 {
 #if defined(GRAPHICS_API_OPENGL_33)     // Also defined for GRAPHICS_API_OPENGL_21
     // NOTE: glad is generated and contains only required OpenGL 3.3 Core extensions (and lower versions)
-    if (gladLoadGL((GLADloadfunc)loader) == 0) TRACELOG(RL_LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
-    else TRACELOG(RL_LOG_INFO, "GLAD: OpenGL extensions loaded successfully");
+    #ifdef GLAD_GL
+        if (gladLoadGL((GLADloadfunc)loader) == 0) TRACELOG(RL_LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
+        else TRACELOG(RL_LOG_INFO, "GLAD: OpenGL extensions loaded successfully");
+    #endif
 
     // Get number of supported extensions
     GLint numExt = 0;
@@ -2451,12 +2457,17 @@ void rlLoadExtensions(void *loader)
 #endif
 
     // Optional OpenGL 3.3 extensions
-    RLGL.ExtSupported.texCompASTC = GLAD_GL_KHR_texture_compression_astc_hdr && GLAD_GL_KHR_texture_compression_astc_ldr;
-    RLGL.ExtSupported.texCompDXT = GLAD_GL_EXT_texture_compression_s3tc;  // Texture compression: DXT
-    RLGL.ExtSupported.texCompETC2 = GLAD_GL_ARB_ES3_compatibility;        // Texture compression: ETC2/EAC
+    #ifdef GLAD_GL
+        RLGL.ExtSupported.texCompASTC = GLAD_GL_KHR_texture_compression_astc_hdr && GLAD_GL_KHR_texture_compression_astc_ldr;
+        RLGL.ExtSupported.texCompDXT = GLAD_GL_EXT_texture_compression_s3tc;  // Texture compression: DXT
+        RLGL.ExtSupported.texCompETC2 = GLAD_GL_ARB_ES3_compatibility;        // Texture compression: ETC2/EAC
+    #else
+        RLGL.ExtSupported.texCompASTC = RLGL.ExtSupported.texCompDXT = RLGL.ExtSupported.texCompETC2 = false;
+    #endif
+
     #if defined(GRAPHICS_API_OPENGL_43)
-    RLGL.ExtSupported.computeShader = GLAD_GL_ARB_compute_shader;
-    RLGL.ExtSupported.ssbo = GLAD_GL_ARB_shader_storage_buffer_object;
+        RLGL.ExtSupported.computeShader = GLAD_GL_ARB_compute_shader;
+        RLGL.ExtSupported.ssbo = GLAD_GL_ARB_shader_storage_buffer_object;
     #endif
 
 #endif // GRAPHICS_API_OPENGL_33
@@ -4221,7 +4232,7 @@ unsigned int rlLoadShader(const char *code, int type)
             //case GL_GEOMETRY_SHADER:
         #if defined(GRAPHICS_API_OPENGL_43)
             case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: [ID %i] Failed to compile compute shader code", shaderId); break;
-        #elif defined(GRAPHICS_API_OPENGL_33)
+        #elif defined(GRAPHICS_API_OPENGL_33) && defined(GLAD_GL)
             case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: Compute shaders not enabled. Define GRAPHICS_API_OPENGL_43", shaderId); break;
         #endif
             default: break;
@@ -4253,7 +4264,7 @@ unsigned int rlLoadShader(const char *code, int type)
             //case GL_GEOMETRY_SHADER:
         #if defined(GRAPHICS_API_OPENGL_43)
             case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Compute shader compiled successfully", shaderId); break;
-        #elif defined(GRAPHICS_API_OPENGL_33)
+        #elif defined(GRAPHICS_API_OPENGL_33) && defined(GLAD_GL)
             case GL_COMPUTE_SHADER: TRACELOG(RL_LOG_WARNING, "SHADER: Compute shaders not enabled. Define GRAPHICS_API_OPENGL_43", shaderId); break;
         #endif
             default: break;
