@@ -14854,7 +14854,7 @@ void EMSCRIPTEN_KEEPALIVE RGFW_handleKeyMods(RGFW_bool capital, RGFW_bool numloc
 	RGFW_updateKeyModsEx(_RGFW->root, capital, numlock, control, alt, shift, super, scroll);
 }
 
-void EMSCRIPTEN_KEEPALIVE Emscripten_onDrop(size_t count) {
+void Emscripten_onDrop(size_t count) {
 	RGFW_dataDropCallback(_RGFW->root, _RGFW->files, count);
 }
 
@@ -14884,7 +14884,7 @@ void RGFW_window_blitSurface(RGFW_window* win, RGFW_surface* surface) {
 
 void RGFW_surface_freePtr(RGFW_surface* surface) { }
 
-void EMSCRIPTEN_KEEPALIVE RGFW_makeSetValue(size_t index, char* file) {
+void RGFW_makeSetValue(size_t index, char* file) {
 	/* This seems like a terrible idea, don't replicate this unless you hate yourself or the OS */
 	/* TODO: find a better way to do this
 	*/
@@ -14897,9 +14897,9 @@ void EMSCRIPTEN_KEEPALIVE RGFW_makeSetValue(size_t index, char* file) {
 #include <errno.h>
 #include <stdio.h>
 
-void EMSCRIPTEN_KEEPALIVE RGFW_mkdir(char* name) { mkdir(name, 0755); }
+void RGFW_mkdir(char* name) { mkdir(name, 0755); }
 
-void EMSCRIPTEN_KEEPALIVE RGFW_writeFile(const char *path, const char *data, size_t len) {
+void RGFW_writeFile(const char *path, const char *data, size_t len) {
     FILE* file = fopen(path, "w+");
 	if (file == NULL)
 		return;
@@ -15068,6 +15068,7 @@ RGFW_window* RGFW_createWindowPlatform(const char* name, RGFW_windowFlags flags,
 		true);
 	});
 
+#if 0
     EM_ASM({
 		var canvas = document.getElementById('canvas');
         canvas.addEventListener('drop', function(e) {
@@ -15117,6 +15118,7 @@ RGFW_window* RGFW_createWindowPlatform(const char* name, RGFW_windowFlags flags,
 
         canvas.addEventListener('dragover', function(e) { e.preventDefault(); return false; }, true);
     });
+#endif // canvas drop handler
 
 	return win;
 }
