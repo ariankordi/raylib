@@ -10702,6 +10702,7 @@ LRESULT CALLBACK WndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             return 0;
         }
 
+#if(_WIN32_WINNT >= 0x0501)
         case WM_UNICHAR: {
             if (wParam == UNICODE_NOCHAR) {
                 return TRUE;
@@ -10710,6 +10711,7 @@ LRESULT CALLBACK WndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			RGFW_keyCharCallback(win, (u32)wParam);
             return 0;
         }
+#endif
 		case WM_SYSKEYUP: case WM_KEYUP: {
 			if (!(win->internal.enabledEvents & RGFW_keyReleasedFlag)) return DefWindowProcW(hWnd, message, wParam, lParam);
 			i32 scancode = (HIWORD(lParam) & (KF_EXTENDED | 0xff));
