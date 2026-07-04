@@ -1118,7 +1118,7 @@ typedef struct rlglData {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static bool isGpuReady = false;
+const bool isGpuReady = true;
 static double rlCullDistanceNear = RL_CULL_DISTANCE_NEAR;
 static double rlCullDistanceFar = RL_CULL_DISTANCE_FAR;
 
@@ -2265,7 +2265,6 @@ static void rlDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum
 // Initialize rlgl: OpenGL extensions, default buffers/shaders/textures, OpenGL states
 void rlglInit(int width, int height)
 {
-    isGpuReady = true;
 
     // Enable OpenGL debug context if requested (and supported)
 #if RLGL_ENABLE_OPENGL_DEBUG_CONTEXT
@@ -2379,7 +2378,6 @@ void rlglClose(void)
 #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
     swClose(); // Unload sofware renderer resources
 #endif
-    isGpuReady = false;
 }
 
 // Load OpenGL extensions
