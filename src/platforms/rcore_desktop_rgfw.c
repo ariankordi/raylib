@@ -1622,6 +1622,7 @@ void PollInputEvents(void)
     RGFW_pollEvents();
     //-----------------------------------------------------------------------------
 
+    return; // skip minigamepad logic
     mg_event gamepad_event = { 0 };
     while (mg_gamepads_check_event(&platform.minigamepad, &gamepad_event))
     {
@@ -2012,7 +2013,6 @@ int InitPlatform(void)
     }
 #endif
 
-    mg_gamepads_init(&platform.minigamepad);
 
     return 0;
 }
@@ -2020,7 +2020,6 @@ int InitPlatform(void)
 // Close platform
 void ClosePlatform(void)
 {
-    mg_gamepads_free(&platform.minigamepad);
     RGFW_window_close(platform.window);
 
     #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
