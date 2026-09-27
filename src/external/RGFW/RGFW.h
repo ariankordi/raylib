@@ -174,7 +174,18 @@ int main() {
 
 #ifdef _WIN32
 
+// NOTE: implementation before the header is intentional
+// otherwise an infinite loop could potentially happen
+#include "../../win32_polyfill.c"
 #include "../../win32_polyfill.h"
+
+#if(_WIN32_WINNT < 0x0600)
+	#define RGFW_NO_DPI
+	#define RGFW_NO_DWM
+#endif
+#if(_WIN32_WINNT < 0x0501)
+	#define RGFW_NO_XINPUT
+#endif
 
 #endif // _WIN32
 
@@ -11941,6 +11952,7 @@ void RGFW_window_show(RGFW_window* win) {
 }
 
 void RGFW_window_flash(RGFW_window* win, RGFW_flashRequest request) {
+#if(_WIN32_WINNT >= 0x0500)
 	if (RGFW_window_isInFocus(win) && request) {
 		return;
 	}
@@ -11966,6 +11978,7 @@ void RGFW_window_flash(RGFW_window* win, RGFW_flashRequest request) {
     }
 
     FlashWindowEx(&desc);
+#endif // _WIN32_WINNT
 }
 
 #define RGFW_FREE_LIBRARY(x) if (x != NULL) FreeLibrary(x); x = NULL;

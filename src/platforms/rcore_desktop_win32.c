@@ -53,6 +53,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include "../win32_polyfill.c"
 #include "../win32_polyfill.h"
 
 #undef CloseWindow      // raylib symbol collision
