@@ -1,4 +1,6 @@
 // Source: https://github.com/rndtrash/glfw/blob/7dea60cb4fe97090094d60a453a3d1c9e9a7902e/src/win32_platform.h#L135
+// Local modifications (not upstream), 2026-09: GetMonitorInfoA gets its own polyfill instead of aliasing
+// the W one, and EnumDisplayDevicesW is added. See the notes at the top of win32_polyfill.c.
 
 #include <windows.h>
 
@@ -52,24 +54,30 @@ int GLFW_ChoosePixelFormat(HDC hdc, PIXELFORMATDESCRIPTOR* pfd);
 
 // Polyfills for Windows versions below 2000
 
-#define GetMonitorInfoW GLFW_GetMonitorInfoW
-#define GetMonitorInfoA GLFW_GetMonitorInfoW // TODO
-BOOL GLFW_GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpmi);
-
 #define VerSetConditionMask GLFW_VerSetConditionMask
 ULONGLONG GLFW_VerSetConditionMask(ULONGLONG dwlConditionMask, DWORD dwTypeBitMask, BYTE dwConditionMask);
 
+// Display polyfills (local addition): emulate one primary display. See win32_polyfill.c.
+
+#define GetMonitorInfoW GLFW_GetMonitorInfoW
+BOOL GLFW_GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpmi);
+
+#define GetMonitorInfoA GLFW_GetMonitorInfoA
+BOOL GLFW_GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpmi);
+
 #define EnumDisplayMonitors GLFW_EnumDisplayMonitors
 BOOL GLFW_EnumDisplayMonitors(HDC hdc, LPCRECT lprcClip, MONITORENUMPROC lpfnEnum, LPARAM dwData);
+
+// NT 4.0's user32 exports an undocumented 3-parameter EnumDisplayDevicesW; calling it through the SDK's
+// 4-parameter prototype unbalances the stack, so this must never reach it.
+#define EnumDisplayDevicesW GLFW_EnumDisplayDevicesW
+BOOL GLFW_EnumDisplayDevicesW(LPCWSTR lpDevice, DWORD iDevNum, PDISPLAY_DEVICEW lpDisplayDevice, DWORD dwFlags);
 
 #define EnumDisplaySettingsW GLFW_EnumDisplaySettingsW
 BOOL GLFW_EnumDisplaySettingsW(LPCWSTR  lpszDeviceName, DWORD iModeNum, DEVMODEW *lpDevMode);
 
 #define EnumDisplaySettingsExW GLFW_EnumDisplaySettingsExW
 BOOL GLFW_EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum, DEVMODEW *lpDevMode, DWORD dwFlags);
-
-// TODO: Below are actually used by raylib.
-// Needs replacement that uses EnumDisplayDevices(?????)
 
 #define MonitorFromWindow GLFW_MonitorFromWindow
 HMONITOR GLFW_MonitorFromWindow(HWND hwnd, DWORD dwFlags);

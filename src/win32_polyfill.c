@@ -1,4 +1,11 @@
 // Source: https://github.com/rndtrash/glfw/blob/master/src/win32_polyfill.c
+//
+// Local modifications (not upstream), 2026-09: the always-FALSE GetMonitorInfoW, EnumDisplaySettingsW
+// and EnumDisplaySettingsExW stubs were replaced, and EnumDisplayDevicesW and GetMonitorInfoA added, in
+// the "Display polyfills" section below. RGFW ignores those return values, so the stubs left its
+// MONITORINFOEX/DEVMODE locals uninitialized.
+// Note: this file must be included BEFORE win32_polyfill.h, since the polyfills call the real
+// EnumDisplaySettingsW, which that header redefines.
 
 #include <windows.h>
 
@@ -17,17 +24,6 @@
             } \
         } \
     }
-
-// GetMonitorInfoW polyfill
-// https://learn.microsoft.com/ru-ru/windows/win32/api/winuser/nf-winuser-getmonitorinfow
-// Reference: https://github.com/metaxor/KernelEx/blob/31cdfc3560fc116637ee8ed7be31b12f3aacf5d1/apilibs/kexbasen/user32/uniuser32.c#L404
-//
-
-BOOL GLFW_GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpmi)
-{
-    // TODO: return the actual screen size
-    return FALSE;
-}
 
 // SetThreadExecutionState polyfill
 // https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-setthreadexecutionstate
@@ -110,6 +106,64 @@ inline ULONGLONG GLFW_VerSetConditionMask(ULONGLONG dwlConditionMask, DWORD dwTy
     return dwlConditionMask;
 }
 
+// ---------------------------------------------------------------------------------------------------
+// Display polyfills (local addition, not from rndtrash/glfw): emulate a single display.
+//
+// NT 4.0's user32 exports an undocumented 3-parameter EnumDisplayDevicesW (it ends in `ret 0xc`, and
+// rejects any non-NULL lpDevice). Calling it through the SDK's 4-parameter prototype leaks 4 bytes of
+// stack per call, which corrupted RGFW_pollMonitors()'s frame, so it must never be called.
+// ---------------------------------------------------------------------------------------------------
+
+/// Adapter name reported by EnumDisplayDevicesW() and GetMonitorInfo()'s szDevice. RGFW matches the
+/// two with wcscmp() and passes szDevice to CreateDCW(), which accepts "DISPLAY" on every NT version.
+#define POLYFILL_DISPLAY_NAME "DISPLAY"
+
+// EnumDisplayDevicesW polyfill
+// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaydevicesw
+//
+// Reports one adapter with one monitor under it. The monitor is required: with no children, RGFW
+// falls back to RGFW_win32_createMonitor(&adapter, NULL), which dereferences the NULL.
+//
+
+BOOL GLFW_EnumDisplayDevicesW(LPCWSTR lpDevice, DWORD iDevNum, PDISPLAY_DEVICEW lpDisplayDevice, DWORD dwFlags)
+{
+    if (iDevNum != 0 || lpDisplayDevice == NULL || lpDisplayDevice->cb < sizeof(DISPLAY_DEVICEW))
+        return FALSE;
+
+    ZeroMemory(lpDisplayDevice, sizeof(DISPLAY_DEVICEW));
+    lpDisplayDevice->cb = sizeof(DISPLAY_DEVICEW);
+
+    // Bit 0 is ATTACHED_TO_DESKTOP for adapters and ACTIVE for monitors (both 0x1).
+    if (lpDevice == NULL)
+    {
+        lstrcpyW(lpDisplayDevice->DeviceName, L"" POLYFILL_DISPLAY_NAME);
+        lstrcpyW(lpDisplayDevice->DeviceString, L"Primary Display Adapter");
+        lpDisplayDevice->StateFlags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE;
+    }
+    else
+    {
+        lstrcpyW(lpDisplayDevice->DeviceName, L"" POLYFILL_DISPLAY_NAME "\\Monitor0");
+        lstrcpyW(lpDisplayDevice->DeviceString, L"Default Monitor");
+        lpDisplayDevice->StateFlags = DISPLAY_DEVICE_ACTIVE;
+    }
+
+    return TRUE;
+}
+
+/// Fills the part of MONITORINFO shared by the A and W variants with the whole screen. Any hMonitor is
+/// accepted, since the EnumDisplayMonitors/MonitorFrom* stubs hand out NULL for the one display.
+static BOOL Polyfill_FillMonitorInfo(LPMONITORINFO lpmi)
+{
+    if (lpmi == NULL || lpmi->cbSize < sizeof(MONITORINFO))
+        return FALSE;
+
+    SetRect(&lpmi->rcMonitor, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+    if (!SystemParametersInfoA(SPI_GETWORKAREA, 0, &lpmi->rcWork, 0))
+        lpmi->rcWork = lpmi->rcMonitor;
+    lpmi->dwFlags = MONITORINFOF_PRIMARY;
+    return TRUE;
+}
+
 // EnumDisplayMonitors polyfill
 // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaymonitors
 //
@@ -120,25 +174,48 @@ BOOL GLFW_EnumDisplayMonitors(HDC hdc, LPCRECT lprcClip, MONITORENUMPROC lpfnEnu
     return FALSE;
 }
 
-// EnumDisplaySettingsExW polyfill
-// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaysettingsexw
+// GetMonitorInfoW/A polyfills
+// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getmonitorinfow
 //
+
+BOOL GLFW_GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpmi)
+{
+    if (!Polyfill_FillMonitorInfo(lpmi))
+        return FALSE;
+
+    if (lpmi->cbSize >= sizeof(MONITORINFOEXW))
+        lstrcpyW(((MONITORINFOEXW *)lpmi)->szDevice, L"" POLYFILL_DISPLAY_NAME);
+    return TRUE;
+}
+
+BOOL GLFW_GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpmi)
+{
+    if (!Polyfill_FillMonitorInfo(lpmi))
+        return FALSE;
+
+    if (lpmi->cbSize >= sizeof(MONITORINFOEXA))
+        lstrcpyA(((MONITORINFOEXA *)lpmi)->szDevice, POLYFILL_DISPLAY_NAME);
+    return TRUE;
+}
+
+// EnumDisplaySettingsW/ExW polyfills
+// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaysettingsw
+//
+// The real EnumDisplaySettingsW exists on NT 4.0 (still unmacroed here, see the note at the top); only
+// the emulated device name needs replacing with NULL, meaning the current display. The Ex flags only
+// widen the mode list, so ignoring them is a safe subset.
+//
+
+BOOL GLFW_EnumDisplaySettingsW(LPCWSTR lpszDeviceName, DWORD iModeNum, DEVMODEW *lpDevMode)
+{
+    return EnumDisplaySettingsW(NULL, iModeNum, lpDevMode);
+}
 
 BOOL GLFW_EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum, DEVMODEW *lpDevMode, DWORD dwFlags)
 {
-    // TODO:
-    return FALSE;
+    return EnumDisplaySettingsW(NULL, iModeNum, lpDevMode);
 }
 
-// EnumDisplaySettingsW polyfill
-// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaysettingsw
-//
-
-BOOL GLFW_EnumDisplaySettingsW(LPCWSTR  lpszDeviceName, DWORD iModeNum, DEVMODEW *lpDevMode)
-{
-    // TODO:
-    return FALSE;
-}
 
 // GetLayeredWindowAttributes polyfill
 // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getlayeredwindowattributes
